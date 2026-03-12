@@ -64,7 +64,7 @@ export interface WorldData {
     createdAt: FieldValue;
     ownerId: string;
     members: { [key: string]: 'owner' | 'editor' | 'viewer' };
-    gameMode: 'sandbox' | 'brick-sprint' | 'isometric-build' | 'tower-defense' | 'puzzle-path' | 'speed-builder';
+    gameMode: 'sandbox' | 'brick-sprint' | 'isometric-build' | 'tower-defense' | 'puzzle-path' | 'speed-builder' | 'bridge-test';
     facilitatorMode?: boolean;
     config?: {
         maxBlocks: number;

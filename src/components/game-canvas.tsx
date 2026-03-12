@@ -273,6 +273,7 @@ export default function GameCanvas({ worldId, playerName }: GameCanvasProps) {
 
   const isFacilitator = useMemo(() => {
     if (worldDataLoading || !worldData) return false;
+    if (worldData.gameMode === 'bridge-test' && isOwner) return true;
     if (worldData.facilitatorMode && isOwner && worldData.facilitatorSessionId === playerSessionId) {
       return true;
     }
@@ -324,6 +325,7 @@ export default function GameCanvas({ worldId, playerName }: GameCanvasProps) {
         }
         // Auto-simulate when bridging phase starts (for non-facilitators)
         if (worldData.gameState.phase === 'bridging') {
+            const delay = worldData.gameMode === 'bridge-test' ? 500 : 3000;
             setTimeout(() => {
                 const mount = mountRef.current;
                 if (!mount || !(mount as any).__THREE__) return;
@@ -343,7 +345,7 @@ export default function GameCanvas({ worldId, playerName }: GameCanvasProps) {
                     physicsFrameRef.current = requestAnimationFrame(physicsLoop);
                 };
                 physicsFrameRef.current = requestAnimationFrame(physicsLoop);
-            }, 3000);
+            }, delay);
         }
         prevPhaseRef.current = worldData.gameState.phase;
     }
@@ -595,6 +597,8 @@ export default function GameCanvas({ worldId, playerName }: GameCanvasProps) {
     const bridgeModel = worldDataRef.current?.gameState?.bridgeModel || defaultBridgeData;
     setImportedModel(bridgeModel as ModelTemplate);
     setGhostNudge({ x: 0, y: 0, z: 0 });
+    // Reset ghost rotation so the bridge doesn't inherit random brick rotation
+    setGhostBlock(prev => prev ? { ...prev, rotationY: 0 } : { position: new THREE.Vector3(0,0,0), typeId: 1, rotationY: 0, visible: false, isPlaceable: true });
     toast({ title: '🌉 Bridge Loaded', description: 'Position the bridge over the towers. Right-click to place. Use arrow keys to nudge.' });
   }, [toast]);
 
@@ -868,7 +872,7 @@ export default function GameCanvas({ worldId, playerName }: GameCanvasProps) {
                       typeId: v.typeId,
                       // The geometry is already rotated by the 'r' key logic, so the face rotation 
                       // should be the voxel's current rotation + the ghost block's visual rotation
-                      rotation: Math.round(v.rotation + currentGhostBlock.rotationY / (Math.PI / 2)) % 4,
+                      rotation: v.rotation,
                       color: v.color,
                       placedBy: user?.uid,
                       isBridge: isFacilitator ? true : undefined,
@@ -1484,7 +1488,7 @@ export default function GameCanvas({ worldId, playerName }: GameCanvasProps) {
                     <DialogDescription className="text-base font-semibold text-muted-foreground pt-2">
                         A bridge is being placed across your towers!
                         <br/><br/>
-                        <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-bold inline-block animate-pulse">⚡ Physics simulation starting in 3 seconds...</span>
+                        <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-bold inline-block animate-pulse">⚡ Physics simulation starting {worldData?.gameMode === 'bridge-test' ? 'instantly' : 'in 3 seconds'}...</span>
                     </DialogDescription>
                 </>
             )}
@@ -1571,7 +1575,7 @@ export default function GameCanvas({ worldId, playerName }: GameCanvasProps) {
       )}
 
       {/* Game Mode Phase UI */}
-      {worldData?.gameMode === 'brick-sprint' && (
+      {(worldData?.gameMode === 'brick-sprint' || worldData?.gameMode === 'bridge-test') && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 w-full max-w-xl px-4 pointer-events-none">
           <div className="bg-black/70 text-white backdrop-blur-md border-2 border-b-4 border-white/20 shadow-2xl rounded-2xl overflow-hidden">
             <div className="p-4 flex flex-col items-center gap-3">

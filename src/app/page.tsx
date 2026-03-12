@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { v4 as uuidv4 } from 'uuid';
 
 const GAME_MODES: { id: GameMode; title: string; description: string; icon: any; color: string; bgColor: string; borderColor: string; disabled?: boolean }[] = [
+  { id: 'bridge-test', title: 'Bridge Test', description: 'Instant bridge testing with pre-built towers.', icon: Rocket, color: 'text-red-600', bgColor: 'bg-red-100', borderColor: 'border-red-300' },
   { id: 'brick-sprint', title: 'Brick Sprint', description: 'Collect bricks, then build a tall tower against the clock!', icon: Timer, color: 'text-orange-600', bgColor: 'bg-orange-100', borderColor: 'border-orange-300' },
   { id: 'sandbox', title: 'Free Build', description: 'No limits, just pure creative freedom with friends.', icon: Globe, color: 'text-blue-600', bgColor: 'bg-blue-100', borderColor: 'border-blue-300' },
   { id: 'isometric-build', title: 'Isometric Build', description: 'Build from a classic top-down isometric perspective.', icon: Layers, color: 'text-cyan-600', bgColor: 'bg-cyan-100', borderColor: 'border-cyan-300' },

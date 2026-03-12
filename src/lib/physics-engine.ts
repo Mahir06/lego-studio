@@ -88,13 +88,6 @@ export function computeClusters(
 }
 
 function areConnected(a: PlacedBlock, b: PlacedBlock): boolean {
-  // Bridges never stick to towers or other non-bridge blocks
-  if (!!a.voxel.isBridge !== !!b.voxel.isBridge) return false;
-  // Bridge blocks only stick to their own segment
-  if (a.voxel.isBridge && b.voxel.isBridge) {
-    if (a.voxel.bridgeSegment !== b.voxel.bridgeSegment) return false;
-  }
-
   const aTop = a.voxel.y + a.block.heightInPlates;
   const bTop = b.voxel.y + b.block.heightInPlates;
 
@@ -268,6 +261,9 @@ export function createPhysicsWorld(
     const bodyA = bridgeBodiesBySegment.get(segments[i])!;
     const bodyB = bridgeBodiesBySegment.get(segments[i + 1])!;
     
+    // Skip if they are already the same body (meaning they merged because of interlocking bricks)
+    if (bodyA === bodyB) continue;
+
     // Lock them at their current initial relative positions
     const lock = new CANNON.LockConstraint(bodyA, bodyB);
     lock.collideConnected = false;
