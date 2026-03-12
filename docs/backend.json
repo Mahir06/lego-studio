@@ -1,0 +1,319 @@
+
+{
+  "entities": {
+    "World": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "World",
+      "type": "object",
+      "description": "Represents a game world, containing chunks of voxel data.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the world."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the world was created."
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "The UID of the user who owns the world."
+        },
+        "facilitatorSessionId": {
+          "type": "string",
+          "description": "The unique session ID of the tab that acts as the facilitator."
+        },
+        "members": {
+          "type": "object",
+          "description": "A map of user UIDs to their roles ('owner', 'editor', 'viewer').",
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "editor",
+              "viewer"
+            ]
+          }
+        },
+        "gameMode": {
+          "type": "string",
+          "enum": ["sandbox", "brick-sprint", "isometric-build", "tower-defense", "puzzle-path", "speed-builder"],
+          "description": "The selected game mode for this world."
+        },
+        "facilitatorMode": {
+          "type": "boolean",
+          "description": "Whether the owner acts as a non-building facilitator."
+        },
+        "config": {
+          "type": "object",
+          "properties": {
+            "maxBlocks": { "type": "number" },
+            "collectingDuration": { "type": "number" },
+            "buildingDuration": { "type": "number" }
+          }
+        },
+        "gameState": {
+          "type": "object",
+          "properties": {
+            "phase": {
+              "type": "string",
+              "enum": ["waiting", "collecting", "building", "finished"]
+            },
+            "phaseStartTime": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "challenge": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "required": [
+        "name",
+        "createdAt",
+        "ownerId",
+        "members",
+        "gameMode"
+      ]
+    },
+    "Voxel": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Voxel",
+      "type": "object",
+      "description": "Represents a single voxel block within a world.",
+      "properties": {
+        "x": {
+          "type": "number",
+          "description": "X coordinate of the voxel."
+        },
+        "y": {
+          "type": "number",
+          "description": "Y coordinate of the voxel (plate layer)."
+        },
+        "z": {
+          "type": "number",
+          "description": "Z coordinate of the voxel."
+        },
+        "typeId": {
+          "type": "number",
+          "description": "ID of the block type."
+        },
+        "rotation": {
+          "type": "number",
+          "description": "Rotation of the block (0-3)."
+        },
+        "color": {
+          "type": "string",
+          "description": "Hex color code of the voxel."
+        },
+        "placedBy": {
+          "type": "string",
+          "description": "UID of the player who placed this block."
+        },
+        "isHeap": {
+          "type": "boolean",
+          "description": "Whether this block is part of the initial collectible heap."
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "z",
+        "typeId",
+        "rotation",
+        "color"
+      ]
+    },
+    "Player": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Player",
+      "type": "object",
+      "description": "Represents a player in the game.",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "The unique identifier for this player session."
+        },
+        "playerName": {
+          "type": "string",
+          "description": "The assigned name of the player in the world."
+        },
+        "worldId": {
+          "type": "string",
+          "description": "ID of the world the player is in."
+        },
+        "position": {
+          "type": "object",
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" },
+            "z": { "type": "number" }
+          },
+          "required": ["x", "y", "z"]
+        },
+        "rotation": {
+          "type": "object",
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" }
+          },
+          "required": ["x", "y"]
+        },
+        "color": {
+          "type": "string",
+          "description": "Hex color code for the player's avatar."
+        },
+        "lastSeen": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the player was last seen."
+        },
+        "authUid": {
+          "type": "string",
+          "description": "The Firebase Auth UID of the user who owns this player session."
+        },
+        "inventory": {
+          "type": "array",
+          "items": { "type": "number" },
+          "description": "List of collected block type IDs."
+        },
+        "isReady": {
+          "type": "boolean",
+          "description": "Whether the player is ready to start the game."
+        }
+      },
+      "required": [
+        "uid",
+        "playerName",
+        "worldId",
+        "position",
+        "rotation",
+        "color",
+        "lastSeen",
+        "authUid"
+      ]
+    },
+    "Controller": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Controller",
+      "type": "object",
+      "description": "Real-time input state from a remote controller.",
+      "properties": {
+        "move": {
+          "type": "object",
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" }
+          },
+          "required": ["x", "y"]
+        },
+        "look": {
+          "type": "object",
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" }
+          },
+          "required": ["x", "y"]
+        },
+        "jump": { "type": "boolean" },
+        "actionA": { "type": "boolean", "description": "Primary action (e.g. Break)" },
+        "actionB": { "type": "boolean", "description": "Secondary action (e.g. Place)" },
+        "lastUpdated": { "type": "string", "format": "date-time" }
+      },
+      "required": ["move", "look", "jump", "actionA", "actionB", "lastUpdated"]
+    },
+    "ChatMessage": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Chat Message",
+      "type": "object",
+      "description": "Represents a single chat message in a world.",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "The UID of the user who sent the message."
+        },
+        "playerName": {
+          "type": "string",
+          "description": "The name of the player who sent the message."
+        },
+        "text": {
+          "type": "string",
+          "description": "The content of the chat message."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the message was sent."
+        }
+      },
+      "required": [
+        "uid",
+        "playerName",
+        "text",
+        "timestamp"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "worlds/{worldId}",
+        "definition": {
+          "entityName": "World",
+          "schema": {
+            "$ref": "#/backend/entities/World"
+          },
+          "description": "Stores world metadata."
+        }
+      },
+      {
+        "path": "worlds/{worldId}/voxels/{voxelId}",
+        "definition": {
+          "entityName": "Voxel",
+          "schema": {
+            "$ref": "#/backend/entities/Voxel"
+          },
+          "description": "Stores individual voxel blocks."
+        }
+      },
+      {
+        "path": "worlds/{worldId}/players/{playerId}",
+        "definition": {
+          "entityName": "Player",
+          "schema": {
+            "$ref": "#/backend/entities/Player"
+          },
+          "description": "Stores player data."
+        }
+      },
+      {
+        "path": "worlds/{worldId}/controllers/{playerId}",
+        "definition": {
+          "entityName": "Controller",
+          "schema": {
+            "$ref": "#/backend/entities/Controller"
+          },
+          "description": "Stores remote controller input state."
+        }
+      },
+      {
+        "path": "worlds/{worldId}/messages/{messageId}",
+        "definition": {
+          "entityName": "ChatMessage",
+          "schema": {
+            "$ref": "#/backend/entities/ChatMessage"
+          },
+          "description": "Stores chat messages."
+        }
+      }
+    ]
+  }
+}

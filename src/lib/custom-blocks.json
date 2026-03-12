@@ -1,0 +1,19 @@
+
+{
+  "blocks": [
+    { "name": "1x1 Plate", "shape": "plate", "width": 1, "depth": 1, "heightInPlates": 1 },
+    { "name": "1x2 Plate", "shape": "plate", "width": 1, "depth": 2, "heightInPlates": 1 },
+    { "name": "1x3 Plate", "shape": "plate", "width": 1, "depth": 3, "heightInPlates": 1 },
+    { "name": "1x4 Plate", "shape": "plate", "width": 1, "depth": 4, "heightInPlates": 1 },
+    { "name": "2x2 Plate", "shape": "plate", "width": 2, "depth": 2, "heightInPlates": 1 },
+    { "name": "2x3 Plate", "shape": "plate", "width": 2, "depth": 3, "heightInPlates": 1 },
+    { "name": "2x4 Plate", "shape": "plate", "width": 2, "depth": 4, "heightInPlates": 1 },
+    { "name": "1x1 Brick", "shape": "brick", "width": 1, "depth": 1, "heightInPlates": 3 },
+    { "name": "1x2 Brick", "shape": "brick", "width": 1, "depth": 2, "heightInPlates": 3 },
+    { "name": "1x3 Brick", "shape": "brick", "width": 1, "depth": 3, "heightInPlates": 3 },
+    { "name": "1x4 Brick", "shape": "brick", "width": 1, "depth": 4, "heightInPlates": 3 },
+    { "name": "2x2 Brick", "shape": "brick", "width": 2, "depth": 2, "heightInPlates": 3 },
+    { "name": "2x3 Brick", "shape": "brick", "width": 2, "depth": 3, "heightInPlates": 3 },
+    { "name": "2x4 Brick", "shape": "brick", "width": 2, "depth": 4, "heightInPlates": 3 }
+  ]
+}
