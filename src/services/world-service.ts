@@ -3,7 +3,7 @@ import { collection, addDoc, serverTimestamp, writeBatch, doc, Firestore } from 
 import { Auth } from 'firebase/auth';
 import { WORLD_WIDTH, WORLD_DEPTH } from '@/lib/world-constants';
 
-export type GameMode = 'sandbox' | 'brick-sprint' | 'isometric-build' | 'tower-defense' | 'puzzle-path' | 'speed-builder' | 'bridge-test';
+export type GameMode = 'sandbox' | 'brick-sprint' | 'isometric-build' | 'tower-defense' | 'puzzle-path' | 'speed-builder';
 
 interface WorldConfig {
     maxBlocks: number;
@@ -25,7 +25,7 @@ export async function createWorld(
     const uid = auth.currentUser.uid;
 
     const worldRef = await addDoc(collection(db, 'worlds'), {
-        name: gameMode === 'bridge-test' ? 'Bridge Integrity Test' : (gameMode === 'isometric-build' ? 'Isometric Creation' : (gameMode === 'brick-sprint' ? 'Brick Sprint Challenge' : 'New World')),
+        name: gameMode === 'isometric-build' ? 'Isometric Creation' : (gameMode === 'brick-sprint' ? 'Brick Sprint Challenge' : 'New World'),
         createdAt: serverTimestamp(),
         ownerId: uid,
         facilitatorSessionId: facilitatorSessionId || null,
@@ -40,8 +40,8 @@ export async function createWorld(
             buildingDuration: 180
         },
         gameState: {
-            phase: gameMode === 'bridge-test' ? 'bridging' : 'waiting',
-            challenge: gameMode === 'bridge-test' ? 'Test your bridge integrity!' : (gameMode === 'brick-sprint' ? 'Build the TALLEST steady tower you can!' : '')
+            phase: 'waiting',
+            challenge: gameMode === 'brick-sprint' ? 'Build the TALLEST steady tower you can!' : ''
         }
     });
 
@@ -61,22 +61,6 @@ export async function createWorld(
             };
             const voxelRef = doc(collection(db, 'worlds', worldRef.id, 'voxels'));
             batch.set(voxelRef, voxelData);
-        }
-    }
-
-    // Pre-build towers for Bridge Test
-    if (gameMode === 'bridge-test') {
-        const towerColor = '#555555';
-        const towerTypeId = 12; // 2x2 Brick (3 plates high)
-        // Tower A
-        for (let y = 1; y < 15; y += 3) {
-            const voxelRef = doc(collection(db, 'worlds', worldRef.id, 'voxels'));
-            batch.set(voxelRef, { x: 1, y, z: 2, typeId: towerTypeId, rotation: 0, color: towerColor });
-        }
-        // Tower B
-        for (let y = 1; y < 15; y += 3) {
-            const voxelRef = doc(collection(db, 'worlds', worldRef.id, 'voxels'));
-            batch.set(voxelRef, { x: 1, y, z: 38, typeId: towerTypeId, rotation: 0, color: towerColor });
         }
     }
 

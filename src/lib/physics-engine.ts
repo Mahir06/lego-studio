@@ -213,8 +213,9 @@ export function createPhysicsWorld(
     comY /= totalMass;
     comZ /= totalMass;
 
+    const multiplier = cluster.some(pb => pb.voxel.isBridge) ? 0.05 : 0.5;
     const body = new CANNON.Body({
-      mass: totalMass * 0.5,
+      mass: totalMass * multiplier,
       position: new CANNON.Vec3(comX, comY, comZ),
       linearDamping: 0.1,
       angularDamping: 0.3,
