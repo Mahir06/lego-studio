@@ -273,7 +273,6 @@ export default function GameCanvas({ worldId, playerName }: GameCanvasProps) {
 
   const isFacilitator = useMemo(() => {
     if (worldDataLoading || !worldData) return false;
-    if (worldData.gameMode === 'bridge-test' && isOwner) return true;
     if (worldData.facilitatorMode && isOwner && worldData.facilitatorSessionId === playerSessionId) {
       return true;
     }
@@ -325,7 +324,6 @@ export default function GameCanvas({ worldId, playerName }: GameCanvasProps) {
         }
         // Auto-simulate when bridging phase starts (for non-facilitators)
         if (worldData.gameState.phase === 'bridging') {
-            const delay = worldData.gameMode === 'bridge-test' ? 500 : 3000;
             setTimeout(() => {
                 const mount = mountRef.current;
                 if (!mount || !(mount as any).__THREE__) return;
@@ -345,7 +343,7 @@ export default function GameCanvas({ worldId, playerName }: GameCanvasProps) {
                     physicsFrameRef.current = requestAnimationFrame(physicsLoop);
                 };
                 physicsFrameRef.current = requestAnimationFrame(physicsLoop);
-            }, delay);
+            }, 3000);
         }
         prevPhaseRef.current = worldData.gameState.phase;
     }
@@ -384,6 +382,7 @@ export default function GameCanvas({ worldId, playerName }: GameCanvasProps) {
       'gameState.phaseStartTime': serverTimestamp()
     });
   }, [worldDocRef, firestore, worldId]);
+
 
   const handleResetGame = useCallback(async () => {
     if (!firestore || !worldDocRef || !isFacilitator) return;
@@ -610,6 +609,42 @@ export default function GameCanvas({ worldId, playerName }: GameCanvasProps) {
       'gameState.phaseStartTime': serverTimestamp()
     });
   }, [worldDocRef]);
+
+  const handleRetryRound = useCallback(async () => {
+    if (!firestore || !worldDocRef || !isFacilitator) return;
+    
+    // Reset to building phase and clear bridge placed flag
+    updateDocumentNonBlocking(worldDocRef, {
+        'gameState.phase': 'building',
+        'gameState.hasBridgeBeenPlaced': false,
+        'gameState.phaseStartTime': serverTimestamp()
+    });
+
+    // Optionally clear bridge blocks (isBridge: true)
+    if (voxelsRef.current) {
+        voxelsRef.current.forEach(v => {
+            if (v.isBridge) {
+                deleteDocumentNonBlocking(doc(firestore, 'worlds', worldId, 'voxels', v.id));
+            }
+        });
+    }
+    
+    // Reset simulation if active
+    if (isSimulating) {
+        setIsSimulating(false);
+        if (physicsFrameRef.current) {
+            cancelAnimationFrame(physicsFrameRef.current);
+            physicsFrameRef.current = null;
+        }
+        if (physicsSimRef.current && mountRef.current) {
+            const voxelMeshesGroup = (mountRef.current as any).__THREE__?.scene.getObjectByName('voxelMeshes');
+            if (voxelMeshesGroup) {
+                resetPhysics(physicsSimRef.current, voxelMeshesGroup);
+            }
+            physicsSimRef.current = null;
+        }
+    }
+  }, [firestore, worldDocRef, isFacilitator, isSimulating, worldId]);
 
   const handleUploadBridge = useCallback(async (file: File) => {
     if (!worldDocRef) return;
@@ -1484,11 +1519,11 @@ export default function GameCanvas({ worldId, playerName }: GameCanvasProps) {
                     <div className="w-20 h-20 bg-gradient-to-br from-purple-400 to-purple-600 rounded-3xl flex items-center justify-center mb-3 shadow-lg shadow-purple-500/30">
                         <span className="text-4xl">🌉</span>
                     </div>
-                    <DialogTitle className="text-3xl font-black uppercase tracking-tight text-purple-600">Phase 3: BRIDGE TEST!</DialogTitle>
+                    <DialogTitle className="text-3xl font-black uppercase tracking-tight text-purple-600">Phase 3: BRIDGING</DialogTitle>
                     <DialogDescription className="text-base font-semibold text-muted-foreground pt-2">
                         A bridge is being placed across your towers!
                         <br/><br/>
-                        <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-bold inline-block animate-pulse">⚡ Physics simulation starting {worldData?.gameMode === 'bridge-test' ? 'instantly' : 'in 3 seconds'}...</span>
+                        <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-bold inline-block animate-pulse">⚡ Physics simulation starting in 3 seconds...</span>
                     </DialogDescription>
                 </>
             )}
@@ -1558,12 +1593,22 @@ export default function GameCanvas({ worldId, playerName }: GameCanvasProps) {
                        <Button className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white hover:opacity-90 font-extrabold h-11 rounded-xl" onClick={handleStartBridging} disabled={!worldData?.gameState?.hasBridgeBeenPlaced}>
                           ⚡ START SIMULATION
                        </Button>
+                        <Button variant="outline" className="w-full border-white/20 text-white hover:bg-white/10 h-11 rounded-xl font-bold" onClick={handleRetryRound}>
+                           🔄 RETRY BUILDING
+                        </Button>
                      </>
                    )}
                    {worldData.gameState?.phase === 'bridging' && (
-                     <Button className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:opacity-90 font-extrabold h-11 rounded-xl" onClick={handleNextPhase}>
+                     
+                      <div className="space-y-2">
+                        <Button className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:opacity-90 font-extrabold h-11 rounded-xl" onClick={handleNextPhase}>
                         <FastForward className="mr-2 h-4 w-4" /> END ROUND
                      </Button>
+                        <Button variant="outline" className="w-full border-white/20 text-white hover:bg-white/10 h-11 rounded-xl font-bold" onClick={handleRetryRound}>
+                            🔄 RETRY BUILDING
+                        </Button>
+                      </div>
+                    
                    )}
                    <Button variant="outline" className="w-full border-white/20 text-white hover:bg-white/10 h-11 rounded-xl font-bold" onClick={handleResetGame} disabled={isResetting}>
                       <RotateCcw className={cn("mr-2 h-4 w-4", isResetting && "animate-spin")} /> RESTART
@@ -1575,7 +1620,7 @@ export default function GameCanvas({ worldId, playerName }: GameCanvasProps) {
       )}
 
       {/* Game Mode Phase UI */}
-      {(worldData?.gameMode === 'brick-sprint' || worldData?.gameMode === 'bridge-test') && (
+      {worldData?.gameMode === 'brick-sprint' && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 w-full max-w-xl px-4 pointer-events-none">
           <div className="bg-black/70 text-white backdrop-blur-md border-2 border-b-4 border-white/20 shadow-2xl rounded-2xl overflow-hidden">
             <div className="p-4 flex flex-col items-center gap-3">
@@ -1592,8 +1637,8 @@ export default function GameCanvas({ worldId, playerName }: GameCanvasProps) {
                      {worldData.gameState?.phase === 'waiting' && 'Waiting'}
                      {worldData.gameState?.phase === 'collecting' && '⛏️ COLLECTING'}
                      {worldData.gameState?.phase === 'building' && '🔨 BUILDING'}
-                     {worldData.gameState?.phase === 'bridging' && '🌉 BRIDGE TEST'}
-                     {worldData.gameState?.phase === 'finished' && '🏆 GAME OVER'}
+                     {worldData.gameState?.phase === 'bridging' && '🌉 BRIDGING'}
+                     {worldData.gameState?.phase === 'finished' && '🏆 FINISHED'}
                    </span>
                 </div>
               </div>
