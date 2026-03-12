@@ -1594,7 +1594,7 @@ export default function GameCanvas({ worldId, playerName }: GameCanvasProps) {
                           ⚡ START SIMULATION
                        </Button>
                         <Button variant="outline" className="w-full border-white/20 text-white hover:bg-white/10 h-11 rounded-xl font-bold" onClick={handleRetryRound}>
-                           🔄 RETRY BUILDING
+                           🔄 RETRY BUILDING (Latest Sync)
                         </Button>
                      </>
                    )}
